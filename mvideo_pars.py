@@ -1,5 +1,4 @@
 import requests
-from bs4 import BeautifulSoup
 import json
 
 
@@ -11,6 +10,7 @@ def error_checker(status_code):
 
 
 def data_getter():
+    # taking product`s ids
     cookies = {
         '__lhash_': 'f636d5938c20485be52a5827d947fcf2',
         'CACHE_INDICATOR': 'false',
@@ -127,9 +127,36 @@ def data_getter():
 
     response = requests.get('https://www.mvideo.ru/bff/products/search', params=params, cookies=cookies,
                             headers=headers).json()
+    product_ids = response.get('body').get('products')
+    with open('products_id.json', 'w') as file:
+        json.dump(product_ids, file, indent=4, ensure_ascii=False)
 
-    product = response.get('body').get('products')
-    print(',\n'.join(product))
+    json_data = {
+        'productIds': product_ids,
+        'mediaTypes': [
+            'images',
+        ],
+        'category': True,
+        'status': True,
+        'brand': True,
+        'propertyTypes': [
+            'KEY',
+        ],
+        'propertiesConfig': {
+            'propertiesPortionSize': 5,
+        },
+        'multioffer': False,
+    }
+
+    response = requests.post('https://www.mvideo.ru/bff/product-details/list', cookies=cookies, headers=headers,
+                             json=json_data).json()
+    with open('products_info.json', 'w') as file:
+        json.dump(response, file, indent=4, ensure_ascii=False)
+    print(response.get('body').get('products')[0])
+
+# productId
+# name
+# rating star
 
 
 def main():

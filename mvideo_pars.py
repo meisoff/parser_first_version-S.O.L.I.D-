@@ -126,8 +126,10 @@ def data_getter():
     }
 
     response = requests.get('https://www.mvideo.ru/bff/products/search', params=params, cookies=cookies,
-                            headers=headers).json()
-    product_ids = response.get('body').get('products')
+                            headers=headers)
+    error_checker(response.status_code)
+
+    product_ids = response.json().get('body').get('products')
     with open('products_id.json', 'w') as file:
         json.dump(product_ids, file, indent=4, ensure_ascii=False)
 
@@ -150,13 +152,35 @@ def data_getter():
 
     response = requests.post('https://www.mvideo.ru/bff/product-details/list', cookies=cookies, headers=headers,
                              json=json_data).json()
+    products_info = response.get('body').get('products')
     with open('products_info.json', 'w') as file:
-        json.dump(response, file, indent=4, ensure_ascii=False)
-    print(response.get('body').get('products')[0])
+        json.dump(products_info, file, indent=4, ensure_ascii=False)
+    print('products id created')
 
-# productId
-# name
-# rating star
+    params = {
+        'productIds': '30051364,30059510,30059511,30054149,30059512,30041167,30056080,30057503,30058309,30058318,30054775,30058870,30039349,30054970,30056697,30058317,30059579,30057804,30057915,30050968,30059738,30054328,30051548,30048375',
+        'addBonusRubles': 'true',
+        'isPromoApplied': 'true',
+    }
+
+    response = requests.get('https://www.mvideo.ru/bff/products/prices', params=params, cookies=cookies,
+                            headers=headers).json()
+    products_price = response.get('body').get('materialPrices')
+
+    prices = {}
+    for elem in products_price:
+        current_id = elem['productId']
+        current_price = elem['price']['salePrice']
+        prices[current_id] = current_price
+
+    for elem in products_info:
+        current_id = elem['productId']
+        elem['price'] = prices[current_id]
+
+    with open('products_list.json', 'w') as file:
+        json.dump(products_info, file, indent=4, ensure_ascii=False)
+
+    print('products list created')
 
 
 def main():
